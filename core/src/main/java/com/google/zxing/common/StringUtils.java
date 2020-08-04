@@ -58,6 +58,7 @@ public final class StringUtils {
     boolean canBeISO88591 = true;
     boolean canBeShiftJIS = true;
     boolean canBeUTF8 = true;
+    boolean canBeGB2312 = true;
     int utf8BytesLeft = 0;
     int utf2BytesChars = 0;
     int utf3BytesChars = 0;
@@ -76,10 +77,24 @@ public final class StringUtils {
         bytes[2] == (byte) 0xBF;
 
     for (int i = 0;
-         i < length && (canBeISO88591 || canBeShiftJIS || canBeUTF8);
+         i < length && (canBeISO88591 || canBeShiftJIS || canBeUTF8 || canBeGB2312);
          i++) {
 
       int value = bytes[i] & 0xFF;
+      
+      // GB2312 stuff
+      if (canBeGB2312) {
+        if (value > 0x7F) { 
+          if (value > 0xB0 && value <= 0xF7) { 
+            int value2 = bytes[i + 1] & 0xFF; 
+            if (value2 > 0xA0 && value2 <= 0xF7) { 
+              canBeGB2312 = true; 
+            } else {
+              canBeGB2312 = false;
+            }
+          } 
+        } 
+      }
 
       // UTF-8 stuff
       if (canBeUTF8) {
@@ -186,6 +201,9 @@ public final class StringUtils {
     }
     if (canBeShiftJIS) {
       return SHIFT_JIS;
+    }
+    if (canBeGB2312) {
+      return GB2312;
     }
     if (canBeUTF8) {
       return UTF8;
